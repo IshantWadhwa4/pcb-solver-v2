@@ -21,6 +21,8 @@ if 'conversation' not in st.session_state:
     st.session_state.conversation = []
 if 'solved' not in st.session_state:
     st.session_state.solved = False
+if 'followup_key' not in st.session_state:
+    st.session_state.followup_key = 0
 
 # Step 1: User input for subject, API key, problem (text or image)
 if not st.session_state.solved:
@@ -64,8 +66,9 @@ if not st.session_state.solved:
                 client = Groq(api_key=st.session_state.groq_api_key)
                 expert_instruction = (
                     f"You are a {st.session_state.subject} expert.\n"
-                    "You will be given a question and you need to solve it step by step.\n"
-                    "Answer in a mix of English and Hindi as if you are an Indian teacher explaining to a student.\n"
+                        "You will be given a question and you need to solve it step by step.\n"
+                        "Answer in a mix of English and Hindi as if you are an Indian teacher explaining to a student.\n"
+                        "try to give your answer in 500 tokens only"
                 )
                 groq_messages = [
                     {"role": "system", "content": expert_instruction},
@@ -106,7 +109,7 @@ if st.session_state.solved:
                 st.warning(f"Audio unavailable for this message: {e}")
 
     # Only text input for follow-up questions
-    followup = st.text_input("Ask a follow-up question:", key="followup_q")
+    followup = st.text_input("Ask a follow-up question:", key=f"followup_q_{st.session_state.followup_key}")
     if st.button("Send Follow-up"):
         if followup.strip():
             st.session_state.conversation.append({"role": "user", "content": followup})
@@ -130,4 +133,4 @@ if st.session_state.solved:
             for chunk in completion:
                 result += chunk.choices[0].delta.content or ""
             st.session_state.conversation.append({"role": "assistant", "content": result})
-            st.session_state.followup_q = "" 
+            st.session_state.followup_key += 1  # This will reset the input box 
